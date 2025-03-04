@@ -10,7 +10,10 @@ const {
     addNewProduct,
     deleteProduct,
     updateProduct,
-    getProductById
+    getProductById,
+    updateOrderStatusForAdmin,
+    manageOrders,
+    getRevenue
 } =  require('../controllers/adminController');
 
 adminRouter.get('/category', getAllCategory);
@@ -22,5 +25,8 @@ adminRouter.post('/product', addNewProduct);
 adminRouter.delete('/product/:id', deleteProduct);
 adminRouter.put('/product/:id', updateProduct);
 adminRouter.get('/product/:id', getProductById);
+adminRouter.put('/order/update-status', updateOrderStatusForAdmin);
+adminRouter.get('/order/manage', manageOrders);
+adminRouter.get('/revenue', getRevenue);
 
 module.exports = adminRouter;

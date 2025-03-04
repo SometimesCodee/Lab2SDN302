@@ -1,4 +1,5 @@
 const Category = require("../model/category");
+const Order = require("../model/order");
 const Product = require('../model/product');
 
 const getAllCategory = async (req, res) => {
@@ -119,6 +120,116 @@ const getProductById = async (req, res) => {
     }
 }
 
+const updateOrderStatusForAdmin = async (req, res) => {
+    try {
+        const { orderId, status } = req.body;
+        console.info(`Updating order status for order ID ${orderId} to ${status}`);
+        const order = await Order.findByIdAndUpdate(orderId, { status });
+        if (!order) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+        res.status(200).json(order);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const manageOrders = async (req, res) => {
+    try {
+        const { status, searchValue, page = 1, perPage = 10 } = req.query;
+        let query = {};
+
+        if (status) {
+            query.status = status;
+        }
+
+        if (searchValue) {
+            query.$or = [
+                { 'user.name': { $regex: searchValue, $options: 'i' } },
+                { 'user.phone': { $regex: searchValue, $options: 'i' } },
+                { 'user.email': { $regex: searchValue, $options: 'i' } }
+            ];
+        }
+
+        const skip = (parseInt(page) - 1) * parseInt(perPage);
+        const totalOrders = await Order.countDocuments(query);
+        const orders = await Order.find(query)
+            .populate('user', 'name email phone')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(parseInt(perPage));
+
+        res.status(200).json({
+            orders,
+            pagination: {
+                currentPage: parseInt(page),
+                totalPages: Math.ceil(totalOrders / parseInt(perPage)),
+                totalItems: totalOrders,
+                itemsPerPage: parseInt(perPage)
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const getRevenue = async (req, res) => {
+    try {
+        const { startDate, endDate } = req.body;
+
+        const matchStage = {};
+        if (startDate || endDate) {
+            matchStage.createdAt = {};
+            if (startDate) matchStage.createdAt.$gte = new Date(startDate);
+            if (endDate) matchStage.createdAt.$lte = new Date(endDate);
+        }
+
+        const revenueData = await Order.aggregate([
+            { $match: matchStage },
+            {
+                $group: {
+                    _id: {
+                        date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                        status: "$status"
+                    },
+                    count: { $sum: 1 },
+                    totalRevenue: { $sum: "$totalPrice" }
+                }
+            }
+        ]);
+
+        let totalRevenue = 0;
+        let totalOrders = 0;
+        let ordersByStatus = {};
+        let revenueByDate = {};
+
+        revenueData.forEach(({ _id, count, totalRevenue: revenue }) => {
+            const { date, status } = _id;
+
+            ordersByStatus[status] = (ordersByStatus[status] || 0) + count;
+            totalOrders += count;
+            if (status === "delivered") totalRevenue += revenue;
+
+            if (!revenueByDate[date]) {
+                revenueByDate[date] = { totalRevenue: 0, ordersByStatus: {} };
+            }
+            revenueByDate[date].ordersByStatus[status] = count;
+            if (status === "delivered") {
+                revenueByDate[date].totalRevenue += revenue;
+            }
+        });
+
+        res.status(200).json({
+            totalRevenue,
+            totalOrders,
+            ordersByStatus,
+            revenueByDate
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
 
 module.exports = {
     getAllCategory,
@@ -129,5 +240,8 @@ module.exports = {
     addNewProduct,
     deleteProduct,
     updateProduct,
-    getProductById
+    getProductById,
+    updateOrderStatusForAdmin,
+    manageOrders,
+    getRevenue,
 };
