@@ -1,6 +1,8 @@
 const Category = require("../model/category");
 const Order = require("../model/order");
 const Product = require('../model/product');
+const User = require("../model/user");
+
 const getAllCategory = async (req, res) => {
     try {
         const categories = await Category.find();
@@ -265,17 +267,22 @@ const manageOrders = async (req, res) => {
         }
 
         if (searchValue) {
-            query.$or = [
-                { 'user.name': { $regex: searchValue, $options: 'i' } },
-                { 'user.phone': { $regex: searchValue, $options: 'i' } },
-                { 'user.email': { $regex: searchValue, $options: 'i' } }
-            ];
+            const matchingUsers = await User.find({
+                $or: [
+                    { name: { $regex: searchValue, $options: 'i' } },
+                    { phone: { $regex: searchValue, $options: 'i' } },
+                    { email: { $regex: searchValue, $options: 'i' } }
+                ]
+            }, '_id');
+            const matchingUserIds = matchingUsers.map(user => user._id);
+            
+            query.userId = { $in: matchingUserIds };
         }
 
         const skip = (parseInt(page) - 1) * parseInt(perPage);
         const totalOrders = await Order.countDocuments(query);
         const orders = await Order.find(query)
-            .populate('user', 'name email phone')
+            .populate('userId', 'name email phone')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(parseInt(perPage));
@@ -290,9 +297,10 @@ const manageOrders = async (req, res) => {
             }
         });
     } catch (error) {
+        console.error('err', error);
         res.status(500).json({ message: error.message });
     }
-}
+};
 
 const getRevenue = async (req, res) => {
     try {
