@@ -171,18 +171,20 @@ const confirmDeliveredOrder = async (req, res) => {
 
 const getOrdersByUser = async (req, res) => {
   try {
-    const { customerId } = req.params;
-
-    if (!customerId) {
-      console.error("Error: customerId is undefined or missing!");
-      return res.status(400).json({ message: "Customer ID is required" });
+    const { userId } = req.params;
+  
+    if (!userId) {
+      console.error("Error: userId is undefined or missing!");
+      return res.status(400).json({ message: "User ID is required" });
     }
 
-    // Find orders using customerId directly
-    const orders = await Order.find({ customerId });
+    // Find orders associated with the userId and populate product details
+    const orders = await Order.find({ userId })
+      .populate("products.productId", "name price") // Fetch product name and price
+      .select("-__v -updatedAt"); // Exclude unnecessary fields
 
     if (!orders || orders.length === 0) {
-      console.log("No orders found for customerId:", customerId);
+      console.log("No orders found for userId:", userId);
       return res.status(404).json({ message: "No orders found for this user" });
     }
 
