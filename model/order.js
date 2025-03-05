@@ -2,13 +2,7 @@ const mongoose = require('mongoose');
 const User = require('./user');
 const OrderSchema = new mongoose.Schema({
   userId: {
-    // type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, validate: {
-    //   validator: async (id) => {
-    //     const user = await User.findById(id);
-    //     return user && user.role === 'user';
-    //   },
-    //   message: 'Customer must be a user'
-    // }
+    type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true
   },
   orderDate: { type: Date, default: Date.now },
   totalPrice: { type: Number, required: true },
