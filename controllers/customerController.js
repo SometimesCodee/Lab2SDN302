@@ -3,7 +3,6 @@ const Product = require("../model/product");
 const Cart = require("../model/cart");
 const Order = require("../model/order");
 const Customer = require("../model/user");
-const mongoose = require("mongoose");
 
 const getProductById = async (req, res) => {
   try {
@@ -165,13 +164,11 @@ const getOrdersByUser = async (req, res) => {
       return res.status(400).json({ message: "Customer ID is required" });
     }
 
-    const objectId = new mongoose.Types.ObjectId(customerId);
-    console.log("Converted ObjectId:", objectId);
-
-    const orders = await Order.find({ customerId: objectId });
+    // Find orders using customerId directly
+    const orders = await Order.find({ customerId });
 
     if (!orders || orders.length === 0) {
-      console.log("No orders found for customerId:", objectId);
+      console.log("No orders found for customerId:", customerId);
       return res.status(404).json({ message: "No orders found for this user" });
     }
 
@@ -243,7 +240,9 @@ const addUserAddress = async (req, res) => {
     });
   } catch (error) {
     console.error("Error adding address:", error);
-    return res.status(500).json({ message: "Error adding address", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Error adding address", error: error.message });
   }
 };
 
@@ -254,7 +253,9 @@ const updateUserAddress = async (req, res) => {
     const { street, city, state, country } = req.body;
 
     if (!userId || !addressId) {
-      return res.status(400).json({ message: "User ID and Address ID are required" });
+      return res
+        .status(400)
+        .json({ message: "User ID and Address ID are required" });
     }
 
     const user = await Customer.findById(userId);
@@ -288,7 +289,9 @@ const updateUserAddress = async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating address:", error);
-    return res.status(500).json({ message: "Error updating address", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Error updating address", error: error.message });
   }
 };
 
@@ -298,7 +301,9 @@ const deleteUserAddress = async (req, res) => {
     const { userId, addressId } = req.params;
 
     if (!userId || !addressId) {
-      return res.status(400).json({ message: "User ID and Address ID are required" });
+      return res
+        .status(400)
+        .json({ message: "User ID and Address ID are required" });
     }
 
     const user = await Customer.findById(userId);
@@ -330,7 +335,9 @@ const deleteUserAddress = async (req, res) => {
     });
   } catch (error) {
     console.error("Error deleting address:", error);
-    return res.status(500).json({ message: "Error deleting address", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Error deleting address", error: error.message });
   }
 };
 
