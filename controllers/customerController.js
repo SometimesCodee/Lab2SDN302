@@ -3,7 +3,7 @@ const Product = require("../model/product");
 const Cart = require("../model/cart");
 const Order = require("../model/order");
 const Customer = require("../model/user");
-
+const mongoose = require("mongoose");
 
 const getProductById = async (req, res) => {
   try {
@@ -166,7 +166,7 @@ const getOrdersByUser = async (req, res) => {
     }
 
     const objectId = new mongoose.Types.ObjectId(customerId);
-    console.log("🛠 Converted ObjectId:", objectId);
+    console.log("Converted ObjectId:", objectId);
 
     const orders = await Order.find({ customerId: objectId });
 
