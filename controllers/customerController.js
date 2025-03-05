@@ -268,16 +268,17 @@ const updateUserAddress = async (req, res) => {
     }
 
     const addressIndex = user.address.findIndex(
-      (addr) => addr._id.toString() === addressId
+      (addr) => addr._id == addressId
     );
+
     if (addressIndex === -1) {
       return res.status(404).json({ message: "Address not found" });
     }
 
-    if (street) user.address[addressIndex].street = street;
-    if (city) user.address[addressIndex].city = city;
-    if (state) user.address[addressIndex].state = state;
-    if (country) user.address[addressIndex].country = country;
+    if (street?.trim()) user.address[addressIndex].street = street;
+    if (city?.trim()) user.address[addressIndex].city = city;
+    if (state?.trim()) user.address[addressIndex].state = state;
+    if (country?.trim()) user.address[addressIndex].country = country;
 
     await user.save();
 
