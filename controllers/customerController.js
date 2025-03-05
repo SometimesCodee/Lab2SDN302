@@ -4,27 +4,33 @@ const Order = require('../model/order');
 const User = require('../model/user');
 
 const getProductById = async (req, res) => {
-    try {
-        const id = req.params.id;
-        const product = await Product.findById(id).populate('categoryId', 'name description');
-        if (!product) {
-            return res.status(404).json({ message: 'Product not found' });
-        }
-        res.status(200).json(product);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  try {
+    const id = req.params.id;
+    const product = await Product.findById(id).populate(
+      "categoryId",
+      "name description"
+    );
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
     }
-}
+    res.status(200).json(product);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 const getAllProduct = async (req, res) => {
-    try {
-        const products = await Product.find().populate('categoryId', 'name description');
-        if (!products) {
-            return res.status(404).json({ message: 'Product not found' });
-        }
-        res.status(200).json(products);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  try {
+    const products = await Product.find().populate(
+      "categoryId",
+      "name description"
+    );
+    if (!products) {
+      return res.status(404).json({ message: "Product not found" });
     }
+    res.status(200).json(products);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 
@@ -163,11 +169,203 @@ const confirmDeliveredOrder = async (req, res) => {
   }
 }
 
+const getOrdersByUser = async (req, res) => {
+  try {
+    const { customerId } = req.params;
+
+    if (!customerId) {
+      console.error("Error: customerId is undefined or missing!");
+      return res.status(400).json({ message: "Customer ID is required" });
+    }
+
+    // Find orders using customerId directly
+    const orders = await Order.find({ customerId });
+
+    if (!orders || orders.length === 0) {
+      console.log("No orders found for customerId:", customerId);
+      return res.status(404).json({ message: "No orders found for this user" });
+    }
+
+    console.log("Orders found:", orders);
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    res
+      .status(500)
+      .json({ message: "Error fetching orders", error: error.message });
+  }
+};
+
+const getUserAddress = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log("Received userId:", userId);
+
+    const user = await Customer.findById(userId).select("name email address");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({
+      name: user.name,
+      email: user.email,
+      addresses: user.address,
+    });
+  } catch (error) {
+    console.error("Error fetching addresses:", error);
+    res.status(500).json({ message: "Error fetching addresses", error });
+  }
+};
+
+// Add a new address
+const addUserAddress = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { street, city, state, country } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    if (!street || !city || !state || !country) {
+      return res
+        .status(400)
+        .json({ message: "All address fields are required" });
+    }
+
+    const user = await Customer.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!Array.isArray(user.address)) {
+      user.address = [];
+    }
+
+    user.address.push({ street, city, state, country });
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Address added successfully",
+      name: user.name,
+      email: user.email,
+      addresses: user.address,
+    });
+  } catch (error) {
+    console.error("Error adding address:", error);
+    return res
+      .status(500)
+      .json({ message: "Error adding address", error: error.message });
+  }
+};
+
+// Update an address
+const updateUserAddress = async (req, res) => {
+  try {
+    const { userId, addressId } = req.params;
+    const { street, city, state, country } = req.body;
+
+    if (!userId || !addressId) {
+      return res
+        .status(400)
+        .json({ message: "User ID and Address ID are required" });
+    }
+
+    const user = await Customer.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!Array.isArray(user.address)) {
+      return res.status(400).json({ message: "Address field is not an array" });
+    }
+
+    const addressIndex = user.address.findIndex(
+      (addr) => addr._id == addressId
+    );
+
+    if (addressIndex === -1) {
+      return res.status(404).json({ message: "Address not found" });
+    }
+
+    if (street?.trim()) user.address[addressIndex].street = street;
+    if (city?.trim()) user.address[addressIndex].city = city;
+    if (state?.trim()) user.address[addressIndex].state = state;
+    if (country?.trim()) user.address[addressIndex].country = country;
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Address updated successfully",
+      name: user.name,
+      email: user.email,
+      addresses: user.address,
+    });
+  } catch (error) {
+    console.error("Error updating address:", error);
+    return res
+      .status(500)
+      .json({ message: "Error updating address", error: error.message });
+  }
+};
+
+// Delete an address
+const deleteUserAddress = async (req, res) => {
+  try {
+    const { userId, addressId } = req.params;
+
+    if (!userId || !addressId) {
+      return res
+        .status(400)
+        .json({ message: "User ID and Address ID are required" });
+    }
+
+    const user = await Customer.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (!Array.isArray(user.address)) {
+      return res.status(400).json({ message: "Address field is not an array" });
+    }
+
+    const updatedAddresses = user.address.filter(
+      (addr) => addr._id.toString() !== addressId
+    );
+
+    if (updatedAddresses.length === user.address.length) {
+      return res.status(404).json({ message: "Address not found" });
+    }
+
+    user.address = updatedAddresses;
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "Address deleted successfully",
+      name: user.name,
+      email: user.email,
+      addresses: user.address,
+    });
+  } catch (error) {
+    console.error("Error deleting address:", error);
+    return res
+      .status(500)
+      .json({ message: "Error deleting address", error: error.message });
+  }
+};
+
 
 module.exports = {
     getAllProduct,
     getProductById,
     cancelOrder,
     placeOrder,
-    confirmDeliveredOrder
+    confirmDeliveredOrder,
+    getOrdersByUser,
+    addUserAddress,
+    getUserAddress,
+    updateUserAddress,
+    deleteUserAddress
 };

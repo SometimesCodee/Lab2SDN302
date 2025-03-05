@@ -66,7 +66,6 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
-
         // Check if user exists
         const user = await User.findOne({ email });
         if (!user) {
@@ -75,7 +74,6 @@ exports.login = async (req, res) => {
                 message: 'Invalid email or password'
             });
         }
-
         // Check password
         const isPasswordValid = await user.comparePassword(password);
         if (!isPasswordValid) {
@@ -87,10 +85,15 @@ exports.login = async (req, res) => {
 
         // Create JWT token
         const token = jwt.sign(
-            { userId: user._id, role: user.role },
+            { userId: user._id.toString(), role: user.role },
             process.env.JWT_SECRET,
-            { expiresIn: '24h' }
+            { expiresIn: '7d' }
         );
+
+        res.cookie('accessToken', token, {
+            expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            httpOnly: true
+        });
 
         res.status(200).json({
             success: true,
@@ -112,3 +115,42 @@ exports.login = async (req, res) => {
         });
     }
 }; 
+
+exports.loginAdmin =async function (req, res) {
+    const {email,password} = req.body
+        try {
+            const user = await User.findOne({ email });
+            console.log('user', user);
+            
+            if (user) {
+                const match = await user.comparePassword(password)
+                if (match) {
+                    const token = jwt.sign(
+                        { userId: user._id.toString(), role: user.role },
+                        process.env.JWT_SECRET,
+                        { expiresIn: '7d' }
+                    );
+                    res.cookie('accessToken',token,{
+                        expires : new Date(Date.now() + 7*24*60*60*1000 )
+                    }) 
+                    res.status(200).json({
+                        token,
+                        message: "Login Successfully"
+                    })
+                } else {
+                    res.status(404).json({
+                        error: "Password Wrong"
+                    })
+                }
+            } else {
+                res.status(404).json({
+                    error: "Email not Found"
+                })
+            }
+            
+        } catch (error) {
+            res.status(500).json({
+                error: error.message
+            })
+        }
+};

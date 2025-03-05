@@ -14,7 +14,10 @@ const {
     updateOrderStatus,
     confirmOder,
     cancelOrder,
-    getOrderById
+    getOrderById,
+    updateOrderStatusForAdmin,
+    manageOrders,
+    getRevenue
 } =  require('../controllers/adminController');
 
 adminRouter.get('/category', getAllCategory);
@@ -30,5 +33,8 @@ adminRouter.put('/order/:id', updateOrderStatus);
 adminRouter.put('/order/confirm/:id', confirmOder);
 adminRouter.put('/order/cancel/:id', cancelOrder);
 adminRouter.get('/order/:id', getOrderById);
+adminRouter.put('/order/update-status', updateOrderStatusForAdmin);
+adminRouter.get('/order/manage', manageOrders);
+adminRouter.get('/revenue', getRevenue);
 
 module.exports = adminRouter;
