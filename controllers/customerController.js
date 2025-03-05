@@ -201,7 +201,7 @@ const getUserAddress = async (req, res) => {
     const { userId } = req.params;
     console.log("Received userId:", userId);
 
-    const user = await Customer.findById(userId).select("name email address");
+    const user = await User.findById(userId).select("name email address");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -233,7 +233,7 @@ const addUserAddress = async (req, res) => {
         .json({ message: "All address fields are required" });
     }
 
-    const user = await Customer.findById(userId);
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -272,7 +272,7 @@ const updateUserAddress = async (req, res) => {
         .json({ message: "User ID and Address ID are required" });
     }
 
-    const user = await Customer.findById(userId);
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
@@ -321,7 +321,7 @@ const deleteUserAddress = async (req, res) => {
         .json({ message: "User ID and Address ID are required" });
     }
 
-    const user = await Customer.findById(userId);
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
