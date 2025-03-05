@@ -1,6 +1,6 @@
 const Category = require("../model/category");
 const Product = require('../model/product');
-
+const Order = require('../model/order');
 const getAllCategory = async (req, res) => {
     try {
         const categories = await Category.find();
@@ -119,6 +119,84 @@ const getProductById = async (req, res) => {
     }
 }
 
+const updateOrderStatus = async (req, res) => {
+    try {
+        const { id, status } = req.body;
+        const order = await Order.findById(id);
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+        order.status = status;
+        await order.save();
+        res.status(200).json({ message: 'Order status updated successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const confirmOder = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const order = await Order.findById(id);
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+        order.status = 'shipped';
+        await order.save();
+        res.status(200).json({ message: 'Order confirmed successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const cancelOrder = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const order = await Order.findById(id).populate('products.productId'); // Lấy chi tiết sản phẩm
+
+        if (!order) {
+            return res.status(404).json({ message: 'Đơn hàng không tồn tại!' });
+        }
+
+        if (order.status === 'shipped' || order.status === 'delivered') {
+            return res.status(400).json({ message: 'Không thể hủy đơn hàng đã giao!' });
+        }
+
+        // Hoàn lại số lượng sản phẩm trong kho
+        for (const item of order.products) {
+            const product = item.productId;
+            if (product) {
+                product.stock += item.quantity;
+                await product.save();
+            }
+        }
+
+        await Order.findByIdAndUpdate(id, { status: 'cancelled' });
+
+        res.status(200).json({ message: 'Đơn hàng đã bị hủy và số lượng hàng đã được hoàn lại!' });
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi khi hủy đơn hàng!', error });
+    }
+};
+
+const getOrderById = async (req, res) => {
+    try {
+        const id = req.params.id;
+        const order = await Order.findById(id)
+            .populate('products.productId') // Lấy thông tin sản phẩm
+            .populate('userId', 'name email phone address'); // Lấy thông tin khách hàng
+
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        res.status(200).json(order);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+
 
 module.exports = {
     getAllCategory,
@@ -129,5 +207,9 @@ module.exports = {
     addNewProduct,
     deleteProduct,
     updateProduct,
-    getProductById
+    getProductById,
+    updateOrderStatus,
+    confirmOder,
+    cancelOrder,
+    getOrderById
 };

@@ -10,7 +10,11 @@ const {
     addNewProduct,
     deleteProduct,
     updateProduct,
-    getProductById
+    getProductById,
+    updateOrderStatus,
+    confirmOder,
+    cancelOrder,
+    getOrderById
 } =  require('../controllers/adminController');
 
 adminRouter.get('/category', getAllCategory);
@@ -22,5 +26,9 @@ adminRouter.post('/product', addNewProduct);
 adminRouter.delete('/product/:id', deleteProduct);
 adminRouter.put('/product/:id', updateProduct);
 adminRouter.get('/product/:id', getProductById);
+adminRouter.put('/order/:id', updateOrderStatus);
+adminRouter.put('/order/confirm/:id', confirmOder);
+adminRouter.put('/order/cancel/:id', cancelOrder);
+adminRouter.get('/order/:id', getOrderById);
 
 module.exports = adminRouter;

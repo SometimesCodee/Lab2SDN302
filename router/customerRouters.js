@@ -5,12 +5,14 @@ const {
     getAllProduct,
     getProductById,
     cancelOrder,
-    placeOrder
+    placeOrder,
+    confirmDeliveredOrder
 } =  require('../controllers/customerController');
 
 customerRouter.get('/product', getAllProduct);
 customerRouter.get('/product/:id', getProductById);
-customerRouter.delete('/order', cancelOrder);
+customerRouter.put('/order/:id', cancelOrder);
 customerRouter.post('/order', placeOrder);
+customerRouter.put('/order/confirm/:id', confirmDeliveredOrder);
 
 module.exports = customerRouter;
