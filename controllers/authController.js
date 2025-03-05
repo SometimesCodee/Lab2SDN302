@@ -85,7 +85,7 @@ exports.login = async (req, res) => {
 
         // Create JWT token
         const token = jwt.sign(
-            { userId: user._id.toString(), role: user.role },
+            { id: user._id.toString(), role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: '7d' }
         );
@@ -120,13 +120,12 @@ exports.loginAdmin =async function (req, res) {
     const {email,password} = req.body
         try {
             const user = await User.findOne({ email });
-            console.log('user', user);
             
             if (user) {
                 const match = await user.comparePassword(password)
                 if (match) {
                     const token = jwt.sign(
-                        { userId: user._id.toString(), role: user.role },
+                        { id: user._id.toString(), role: user.role },
                         process.env.JWT_SECRET,
                         { expiresIn: '7d' }
                     );
