@@ -11,7 +11,8 @@ const {
     addUserAddress,
     getUserAddress,
     updateUserAddress,
-    deleteUserAddress
+    deleteUserAddress,
+    getOrderById
 } =  require('../controllers/customerController');
 
 customerRouter.get('/product', getAllProduct);
@@ -24,5 +25,6 @@ customerRouter.post("/address/:userId", addUserAddress );
 customerRouter.get("/address/:userId", getUserAddress);
 customerRouter.put("/address/:userId/:addressId", updateUserAddress);
 customerRouter.delete("/address/:userId/:addressId", deleteUserAddress);
+customerRouter.get("/orderdetail/:id", getOrderById);
 
 module.exports = customerRouter;

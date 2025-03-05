@@ -183,16 +183,59 @@ const getOrderById = async (req, res) => {
     try {
         const id = req.params.id;
         const order = await Order.findById(id)
-            .populate('products.productId') // Lấy thông tin sản phẩm
-            .populate('userId', 'name email phone address'); // Lấy thông tin khách hàng
+            .populate({
+                path: 'products.productId',
+                select: 'name price categoryId'
+            })
+            .populate({
+                path: 'userId',
+                select: 'name email phone address'
+            })
+            .populate({
+                path: 'products.productId.categoryId',
+                select: 'name'
+            });
 
         if (!order) {
             return res.status(404).json({ message: 'Order not found' });
         }
 
-        res.status(200).json(order);
+        // Format lại orderDate
+        const formattedOrderDate = order.orderDate.toLocaleString('vi-VN', {
+            hour: '2-digit',
+            minute: '2-digit',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+
+        // Format lại địa chỉ
+        const formattedAddress = `${order.address.street}, ${order.address.city}, ${order.address.state}, ${order.address.country}`;
+
+        // Format lại danh sách sản phẩm
+        const formattedProducts = order.products.map(item => ({
+            name: item.productId.name,
+            price: item.productId.price,
+            category: item.productId.categoryId ? item.productId.categoryId.name : 'Unknown',
+            quantity: item.quantity,
+            total: item.productId.price * item.quantity
+        }));
+
+        res.status(200).json({
+            _id: order._id,
+            user: order.userId.name, // Chỉ lấy tên của user
+            orderDate: formattedOrderDate,
+            totalPrice: order.totalPrice,
+            products: formattedProducts,
+            status: order.status,
+            address: formattedAddress,
+            createdAt: order.createdAt,
+            updatedAt: order.updatedAt
+        });
+
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error(error);
+        res.status(500).json({ message: 'Lỗi khi lấy đơn hàng!', error });
     }
 };
 
